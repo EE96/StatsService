@@ -1,0 +1,110 @@
+service: StatsService
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-typescript
+  # - serverless-plugin-common-excludes
+  # - serverless-plugin-include-dependencies
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-2
+
+functions:
+  createSession:
+    handler: src/endpoints/sessions/createSession/handler.handler
+    events:
+      - httpApi:
+          path: /courses/{courseId}
+          method: post
+
+  getCourseLifetimeStats:
+    handler: src/endpoints/sessions/getCourseLifetimeStats/handler.handler
+    events:
+      - httpApi:
+          path: /courses/{courseId}
+          method: get
+
+  getSession:
+    handler: src/endpoints/sessions/getSession/handler.handler
+    events:
+      - httpApi:
+          path: /courses/{courseId}/sessions/{sessionId}
+          method: get
+
+resources:
+  Resources:
+    Sessions:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Sessions
+        AttributeDefinitions:
+          - AttributeName: hashKey
+            AttributeType: S
+          - AttributeName: sortKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: hashKey
+            KeyType: HASH
+          - AttributeName: sortKey
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+#   Resources:
+#     DBSubnetGroup:
+#       Type: AWS::RDS::DBSubnetGroup
+#       Properties:
+#         DBSubnetGroupDescription: "Subnet group for Aurora Serverless"
+#         SubnetIds:
+#           - subnet-006ede5a4520b2b25
+#           - subnet-0ddb222bab1d62652
+#         DBSubnetGroupName: stats-service-db-subnet-group
+
+#     AuroraServerlessDBCluster:
+#       Type: AWS::RDS::DBCluster
+#       Properties:
+#         Engine: aurora-mysql
+#         EngineVersion: "8.0"
+#         EngineMode: provisioned
+#         DatabaseName: StatsServiceDB
+#         MasterUsername: masteruser
+#         MasterUserPassword: masterpassword
+#         ServerlessV2ScalingConfiguration:
+#           MinCapacity: 1
+#           MaxCapacity: 2
+#         BackupRetentionPeriod: 1
+#         VpcSecurityGroupIds:
+#           - sg-0d90f9d184440c202
+#         DBSubnetGroupName: !Ref DBSubnetGroup
+
+#     AuroraServerlessDBInstance:
+#       Type: AWS::RDS::DBInstance
+#       Properties:
+#         DBClusterIdentifier:
+#           Ref: AuroraServerlessDBCluster
+#         Engine: aurora-mysql
+#         DBInstanceClass: db.serverless
+#         PubliclyAccessible: false
+#       DependsOn:
+#         - AuroraServerlessDBCluster 
+
+#     SecurityGroup:
+#       Type: AWS::EC2::SecurityGroup
+#       Properties:
+#         GroupDescription: "Security group for Aurora Serverless"
+#         VpcId: vpc-0e6777b7f2176e83d
+#         SecurityGroupIngress:
+#           - IpProtocol: tcp
+#             FromPort: 3306
+#             ToPort: 3306
+#             CidrIp: 0.0.0.0/0
+                
+
+#   Outputs:
+#     AuroraServerlessClusterEndpoint:
+#       Value: !GetAtt AuroraServerlessDBCluster.Endpoint.Address
+#       Export:
+#         Name: AuroraServerlessClusterEndpoint
